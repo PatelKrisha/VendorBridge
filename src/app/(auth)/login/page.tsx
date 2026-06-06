@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="absolute top-0 -left-4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 -right-4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
 
-      <div className="max-w-md w-full space-y-8 glassmorphism p-8 md:p-10 rounded-2xl border border-slate-700/30 relative z-10">
+      <div className="max-w-md w-full space-y-8 glassmorphism-dark p-8 md:p-10 rounded-2xl border border-slate-800/40 relative z-10">
         {/* Branding header */}
         <div className="text-center">
           <div className="flex justify-center">
