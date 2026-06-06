@@ -20,6 +20,41 @@ interface Notification {
   href: string;
 }
 
+const NOTIFICATIONS_STORAGE_KEY = 'vendorbridge_notifications_read';
+
+function loadReadNotifications(): Record<number, boolean> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(NOTIFICATIONS_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveReadNotification(id: number) {
+  if (typeof window === 'undefined') return;
+  try {
+    const read = loadReadNotifications();
+    read[id] = true;
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(read));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function saveAllReadNotifications(ids: number[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    const read = loadReadNotifications();
+    ids.forEach(id => {
+      read[id] = true;
+    });
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(read));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 export default function Header({ userName, userEmail, role }: HeaderProps) {
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -39,6 +74,14 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
   ]);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
+
+  // Load persisted notification read status on mount
+  useEffect(() => {
+    const readMap = loadReadNotifications();
+    setNotifications((prev) =>
+      prev.map((n) => (readMap[n.id] ? { ...n, unread: false } : n))
+    );
+  }, []);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -105,10 +148,13 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
   };
 
   const markAllRead = () => {
+    const ids = notifications.map((n) => n.id);
+    saveAllReadNotifications(ids);
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   };
 
   const markOneRead = (id: number) => {
+    saveReadNotification(id);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
     );
@@ -146,10 +192,13 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
                 searchResults.map((item, idx) => (
                   <button
                     key={idx}
-                    onClick={() => {
-                      setSearchResults(null);
-                      setSearchQuery('');
+                    onClick={(e) => {
+                      e.preventDefault();
                       router.push(item.href);
+                      setTimeout(() => {
+                        setSearchResults(null);
+                        setSearchQuery('');
+                      }, 50);
                     }}
                     className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-center justify-between text-xs cursor-pointer"
                   >
@@ -228,8 +277,10 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
                       key={n.id}
                       onClick={() => {
                         markOneRead(n.id);
-                        setShowNotifications(false);
                         router.push(n.href);
+                        setTimeout(() => {
+                          setShowNotifications(false);
+                        }, 50);
                       }}
                       className={`relative flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-slate-50 ${
                         n.unread ? 'bg-blue-50/30' : 'bg-white'
@@ -278,7 +329,13 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
               <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50 text-center">
                 <Link
                   href={role === 'VENDOR' ? '/vendor-portal' : '/activity-logs'}
-                  onClick={() => setShowNotifications(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(role === 'VENDOR' ? '/vendor-portal' : '/activity-logs');
+                    setTimeout(() => {
+                      setShowNotifications(false);
+                    }, 50);
+                  }}
                   className="text-[11px] font-semibold text-accent hover:underline"
                 >
                   View full activity log →
@@ -322,7 +379,13 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
               <div className="p-1.5 space-y-0.5">
                 <Link
                   href={role === 'VENDOR' ? '/vendor-portal' : '/settings'}
-                  onClick={() => setShowProfileMenu(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(role === 'VENDOR' ? '/vendor-portal' : '/settings');
+                    setTimeout(() => {
+                      setShowProfileMenu(false);
+                    }, 50);
+                  }}
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
                 >
                   <Settings className="w-3.5 h-3.5" />
