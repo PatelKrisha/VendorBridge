@@ -5,10 +5,15 @@ import { verifyAccessToken } from './lib/auth/jwt';
 // Public API endpoints that don't need auth
 const PUBLIC_API_PATHS = [
   '/api/v1/auth/login',
+  '/api/v1/auth/register',
   '/api/v1/auth/refresh',
   '/api/v1/auth/forgot-password',
   '/api/v1/auth/reset-password',
 ];
+
+// Public page routes that don't need auth
+const PUBLIC_PAGE_PATHS = ['/login', '/register'];
+
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,6 +23,7 @@ export async function proxy(request: NextRequest) {
   // Check if it's an API route or page under dashboard
   const isApiRoute = pathname.startsWith('/api/');
   const isPublicApi = PUBLIC_API_PATHS.some((path) => pathname.startsWith(path));
+  const isPublicPage = PUBLIC_PAGE_PATHS.some((path) => pathname === path || pathname.startsWith(path + '/'));
   const isDashboardPage =
     pathname.startsWith('/vendors') ||
     pathname.startsWith('/rfqs') ||
@@ -32,10 +38,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/vendor-portal') ||
     pathname === '/';
 
-  // If it's a public API path, let it pass
-  if (isApiRoute && isPublicApi) {
+  // If it's a public API path or public page (login/register), let it pass
+  if ((isApiRoute && isPublicApi) || (!isApiRoute && isPublicPage)) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
+
 
   // If it's a protected API route or dashboard page, verify access token
   if (isApiRoute || isDashboardPage) {

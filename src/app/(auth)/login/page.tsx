@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Building2, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
@@ -131,8 +132,17 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="pt-4 border-t border-slate-800/60 text-center">
-          <p className="text-[10px] text-slate-400 leading-normal">
+        <div className="pt-4 border-t border-slate-800/60 text-center space-y-3">
+          <p className="text-[11px] text-slate-400">
+            New vendor?{' '}
+            <Link
+              href="/register"
+              className="text-teal-400 hover:text-teal-300 font-semibold transition-colors"
+            >
+              Create a Vendor Account
+            </Link>
+          </p>
+          <p className="text-[10px] text-slate-500 leading-normal">
             By signing in, you agree to our terms. Secure 256-bit encryption verified.
           </p>
         </div>
