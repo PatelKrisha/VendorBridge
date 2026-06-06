@@ -33,7 +33,9 @@ export default function ApprovalsPage() {
 
   // Load persisted decisions once on mount (avoids SSR mismatch)
   useEffect(() => {
-    setDecisions(loadDecisions());
+    const loaded = loadDecisions();
+    console.log('CLIENT EFFECT: Loaded decisions from localStorage:', loaded);
+    setDecisions(loaded);
     setMounted(true);
   }, []);
 
@@ -47,6 +49,10 @@ export default function ApprovalsPage() {
 
   const pendingApprovals = ALL_APPROVALS.filter((a) => !decisions[a.id]);
   const decidedApprovals = ALL_APPROVALS.filter((a) => decisions[a.id]);
+
+  console.log('RENDER: decisions state:', decisions);
+  console.log('RENDER: pendingApprovals:', pendingApprovals.map(p => p.rfqNumber));
+  console.log('RENDER: decidedApprovals:', decidedApprovals.map(d => d.rfqNumber));
 
   if (!mounted) return null; // Prevent SSR hydration mismatch
 
