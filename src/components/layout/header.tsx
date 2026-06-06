@@ -378,10 +378,10 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
               </div>
               <div className="p-1.5 space-y-0.5">
                 <Link
-                  href={role === 'VENDOR' ? '/vendor-portal' : '/settings'}
+                  href="/settings"
                   onClick={(e) => {
                     e.preventDefault();
-                    router.push(role === 'VENDOR' ? '/vendor-portal' : '/settings');
+                    router.push('/settings');
                     setTimeout(() => {
                       setShowProfileMenu(false);
                     }, 50);

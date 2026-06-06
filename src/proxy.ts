@@ -74,13 +74,14 @@ export async function proxy(request: NextRequest) {
     const userRole = payload.role;
 
     if (userRole === 'VENDOR') {
-      // Vendors can only access vendor-portal, purchase-orders, invoices, quotations
+      // Vendors can only access vendor-portal, purchase-orders, invoices, quotations, settings
       if (
         isDashboardPage &&
         !pathname.startsWith('/vendor-portal') &&
         !pathname.startsWith('/quotations/submit') &&
         !pathname.startsWith('/purchase-orders') &&
-        !pathname.startsWith('/invoices')
+        !pathname.startsWith('/invoices') &&
+        !pathname.startsWith('/settings')
       ) {
         return NextResponse.redirect(new URL('/vendor-portal', request.url));
       }

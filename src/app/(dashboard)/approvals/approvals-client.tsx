@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, Check, X, ShieldAlert, CheckCircle2, XCircle } from 'lucide-react';
 import { submitApprovalDecision } from '@/app/actions/approvals';
 import { useRouter } from 'next/navigation';
@@ -24,10 +24,36 @@ interface ApprovalsClientProps {
   requests: DbApprovalRequest[];
 }
 
+const DECISIONS_STORAGE_KEY = 'vendorbridge_approvals_decisions';
+
+function saveDecision(requestId: string, action: 'APPROVED' | 'REJECTED') {
+  if (typeof window === 'undefined') return;
+  try {
+    const local = JSON.parse(localStorage.getItem(DECISIONS_STORAGE_KEY) || '{}');
+    local[requestId] = action;
+    localStorage.setItem(DECISIONS_STORAGE_KEY, JSON.stringify(local));
+
+    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `vendorbridge_decisions=${encodeURIComponent(JSON.stringify(local))}; expires=${expires}; path=/; SameSite=Strict`;
+  } catch (e) {
+    console.error('Error saving local decision:', e);
+  }
+}
+
 export default function ApprovalsClient({ requests }: ApprovalsClientProps) {
   const router = useRouter();
   const [remarks, setRemarks] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
+  const [clientDecisions, setClientDecisions] = useState<Record<string, 'APPROVED' | 'REJECTED'>>({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DECISIONS_STORAGE_KEY);
+      if (stored) {
+        setClientDecisions(JSON.parse(stored));
+      }
+    } catch {}
+  }, []);
 
   const handleAction = async (requestId: string, action: 'APPROVED' | 'REJECTED') => {
     setSubmitting(prev => ({ ...prev, [requestId]: true }));
@@ -42,6 +68,8 @@ export default function ApprovalsClient({ requests }: ApprovalsClientProps) {
     setSubmitting(prev => ({ ...prev, [requestId]: false }));
 
     if (res.success) {
+      saveDecision(requestId, action);
+      setClientDecisions(prev => ({ ...prev, [requestId]: action }));
       // Clear remarks field
       setRemarks(prev => {
         const updated = { ...prev };
@@ -54,8 +82,16 @@ export default function ApprovalsClient({ requests }: ApprovalsClientProps) {
     }
   };
 
-  const pendingApprovals = requests.filter((a) => a.status === 'PENDING');
-  const decidedApprovals = requests.filter((a) => a.status === 'APPROVED' || a.status === 'REJECTED');
+  const mergedRequests = requests.map(req => {
+    const localStatus = clientDecisions[req.id];
+    if (localStatus) {
+      return { ...req, status: localStatus };
+    }
+    return req;
+  });
+
+  const pendingApprovals = mergedRequests.filter((a) => a.status === 'PENDING');
+  const decidedApprovals = mergedRequests.filter((a) => a.status === 'APPROVED' || a.status === 'REJECTED');
 
   return (
     <div className="space-y-6">

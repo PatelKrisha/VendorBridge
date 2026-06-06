@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   let firstName = 'Aishwarya';
+  const userRole = user?.role || 'ADMIN';
 
   if (user) {
     try {
@@ -23,7 +24,16 @@ export default async function DashboardPage() {
         firstName = dbUser.name.split(' ')[0];
       }
     } catch (e) {
-      console.error('Error fetching user name for dashboard:', e);
+      console.warn('Error fetching user name for dashboard, using email fallback:', e);
+      const mockNames: Record<string, string> = {
+        'admin@acme.com': 'Aishwarya Nair',
+        'officer@acme.com': 'Ritu Sharma',
+        'approver@acme.com': 'Priya Mehta',
+        'finance@acme.com': 'Vikram Joshi',
+        'vendor@supernova.com': 'Mohammed Farhan',
+      };
+      const fullName = mockNames[user.email] || user.email.split('@')[0];
+      firstName = fullName.split(' ')[0];
     }
   }
 
@@ -60,18 +70,31 @@ export default async function DashboardPage() {
     'Pending Invoices': 'text-danger bg-rose-50',
   };
 
-  const stats = statsData.map(stat => ({
-    ...stat,
-    icon: iconMap[stat.name] || FileText,
-    color: colorMap[stat.name] || 'text-blue-600 bg-blue-50',
-  }));
+  const allowedStatsByRole: Record<string, string[]> = {
+    'ADMIN': ['Active RFQs', 'Pending Approvals', 'Issued POs', 'Overdue Invoices'],
+    'OFFICER': ['Active RFQs', 'Issued POs'],
+    'APPROVER': ['Pending Approvals', 'Issued POs'],
+    'FINANCE': ['Issued POs', 'Overdue Invoices', 'Pending Invoices'],
+    'VENDOR': ['Assigned RFQs', 'Active POs', 'Pending Invoices', 'Overdue Invoices']
+  };
 
-  const quickActions = [
-    { label: 'Create New RFQ', href: '/rfqs', description: 'Publish a new request for quotation' },
-    { label: 'Onboard New Vendor', href: '/vendors', description: 'Register and verify a supplier' },
-    { label: 'View Approvals Queue', href: '/approvals', description: 'Review pending approval items' },
-    { label: 'View Payment Ledger', href: '/payment-ledger', description: 'Check outstanding payments' },
+  const roleStats = allowedStatsByRole[userRole] || ['Issued POs'];
+  const stats = statsData
+    .filter(stat => roleStats.includes(stat.name))
+    .map(stat => ({
+      ...stat,
+      icon: iconMap[stat.name] || FileText,
+      color: colorMap[stat.name] || 'text-blue-600 bg-blue-50',
+    }));
+
+  const allQuickActions = [
+    { label: 'Create New RFQ', href: '/rfqs', description: 'Publish a new request for quotation', allowedRoles: ['ADMIN', 'OFFICER'] },
+    { label: 'Onboard New Vendor', href: '/vendors', description: 'Register and verify a supplier', allowedRoles: ['ADMIN', 'OFFICER'] },
+    { label: 'View Approvals Queue', href: '/approvals', description: 'Review pending approval items', allowedRoles: ['ADMIN', 'APPROVER'] },
+    { label: 'View Payment Ledger', href: '/payment-ledger', description: 'Check outstanding payments', allowedRoles: ['ADMIN', 'FINANCE'] },
   ];
+
+  const quickActions = allQuickActions.filter((action) => action.allowedRoles.includes(userRole));
 
   return (
     <div className="space-y-8">
@@ -116,13 +139,15 @@ export default async function DashboardPage() {
         <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm shadow-slate-100/50 lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-800">Recent Activity Log</h2>
-            <Link
-              href="/activity-logs"
-              className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline"
-            >
-              View Audit Trail
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+            {(userRole === 'ADMIN' || userRole === 'OFFICER') && (
+              <Link
+                href="/activity-logs"
+                className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline"
+              >
+                View Audit Trail
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
           
           <div className="flow-root">

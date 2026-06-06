@@ -168,18 +168,20 @@ export default function PurchaseOrdersClient({ orders, userRole }: PurchaseOrder
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          type="button"
                           onClick={() => setSelectedPo(order)}
-                          className="p-1.5 text-slate-400 hover:text-accent rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
+                          className="p-2.5 text-slate-400 hover:text-accent rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
                           title="View PO Details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-5 h-5" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDownloadPo(order)}
-                          className="p-1.5 text-slate-400 hover:text-slate-750 rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
+                          className="p-2.5 text-slate-400 hover:text-slate-750 rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
                           title="Download PO Details"
                         >
-                          <FileDown className="w-4 h-4" />
+                          <FileDown className="w-5 h-5" />
                         </button>
                       </div>
                     </td>
