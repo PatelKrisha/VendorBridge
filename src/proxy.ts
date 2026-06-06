@@ -13,49 +13,28 @@ const PUBLIC_API_PATHS = [
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. CSP Nonce Generation
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const cspHeader = `
-    default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' blob: data:;
-    font-src 'self';
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-ancestors 'none';
-    upgrade-insecure-requests;
-  `.replace(/\s{2,}/g, ' ').trim();
-
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('Content-Security-Policy', cspHeader);
-  requestHeaders.set('x-nonce', nonce);
 
-  // 2. Authentication and Authorization Guard
   // Check if it's an API route or page under dashboard
   const isApiRoute = pathname.startsWith('/api/');
   const isPublicApi = PUBLIC_API_PATHS.some((path) => pathname.startsWith(path));
-  const isDashboardPage = pathname.startsWith('/vendors') || 
-                          pathname.startsWith('/rfqs') || 
-                          pathname.startsWith('/quotations') || 
-                          pathname.startsWith('/approvals') || 
-                          pathname.startsWith('/purchase-orders') || 
-                          pathname.startsWith('/invoices') ||
-                          pathname.startsWith('/payment-ledger') ||
-                          pathname.startsWith('/activity-logs') ||
-                          pathname.startsWith('/reports') ||
-                          pathname.startsWith('/settings') ||
-                          pathname.startsWith('/vendor-portal') ||
-                          pathname === '/';
+  const isDashboardPage =
+    pathname.startsWith('/vendors') ||
+    pathname.startsWith('/rfqs') ||
+    pathname.startsWith('/quotations') ||
+    pathname.startsWith('/approvals') ||
+    pathname.startsWith('/purchase-orders') ||
+    pathname.startsWith('/invoices') ||
+    pathname.startsWith('/payment-ledger') ||
+    pathname.startsWith('/activity-logs') ||
+    pathname.startsWith('/reports') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/vendor-portal') ||
+    pathname === '/';
 
-  // If it's a public API path, let it pass (still inject CSP headers)
+  // If it's a public API path, let it pass
   if (isApiRoute && isPublicApi) {
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // If it's a protected API route or dashboard page, verify access token
@@ -66,7 +45,7 @@ export async function proxy(request: NextRequest) {
     if (authHeader?.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     } else {
-      // Fallback to cookie check if authorization header is not present (e.g. page visits)
+      // Fallback to cookie check for page visits
       token = request.cookies.get('access_token')?.value || '';
     }
 
@@ -77,7 +56,6 @@ export async function proxy(request: NextRequest) {
           { status: 401 }
         );
       }
-      // Redirect to login page for page views
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
@@ -95,14 +73,15 @@ export async function proxy(request: NextRequest) {
     // Role-based route guarding
     const userRole = payload.role;
 
-    // Vendor role restrictions
     if (userRole === 'VENDOR') {
-      // Vendors should only access vendor-portal or related pages
-      if (isDashboardPage && 
-          !pathname.startsWith('/vendor-portal') && 
-          !pathname.startsWith('/quotations/submit') &&
-          !pathname.startsWith('/purchase-orders') &&
-          !pathname.startsWith('/invoices')) {
+      // Vendors can only access vendor-portal, purchase-orders, invoices, quotations
+      if (
+        isDashboardPage &&
+        !pathname.startsWith('/vendor-portal') &&
+        !pathname.startsWith('/quotations/submit') &&
+        !pathname.startsWith('/purchase-orders') &&
+        !pathname.startsWith('/invoices')
+      ) {
         return NextResponse.redirect(new URL('/vendor-portal', request.url));
       }
     } else {
@@ -110,25 +89,20 @@ export async function proxy(request: NextRequest) {
       if (isDashboardPage && pathname.startsWith('/vendor-portal')) {
         return NextResponse.redirect(new URL('/', request.url));
       }
-      
-      // Approver checks
+      // Approver cannot create new RFQs
       if (userRole === 'APPROVER' && pathname.startsWith('/rfqs/new')) {
         return NextResponse.redirect(new URL('/rfqs', request.url));
       }
     }
 
-    // Inject user info headers so subsequent handlers can access it easily without parsing JWT again
+    // Inject user info into headers for downstream server components / route handlers
     requestHeaders.set('x-user-id', payload.userId);
     requestHeaders.set('x-user-org-id', payload.orgId);
     requestHeaders.set('x-user-role', payload.role);
     requestHeaders.set('x-user-email', payload.email);
   }
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 // Config to specify matching paths
