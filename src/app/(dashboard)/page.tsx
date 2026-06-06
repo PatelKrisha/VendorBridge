@@ -1,22 +1,70 @@
-'use client';
-
 import Link from 'next/link';
 import { FileText, CheckSquare, FileCheck, AlertCircle, TrendingUp, Users, ArrowUpRight } from 'lucide-react';
+import { getDashboardStats } from '@/app/actions/dashboard';
+import { getCurrentUser } from '@/lib/auth-context';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
-export default function DashboardPage() {
-  const stats = [
-    { name: 'Active RFQs', value: '12', change: '+2 this week', icon: FileText, color: 'text-blue-600 bg-blue-50', href: '/rfqs' },
-    { name: 'Pending Approvals', value: '4', change: '2 SLA warning', icon: CheckSquare, color: 'text-amber-600 bg-amber-50', href: '/approvals' },
-    { name: 'Issued POs', value: '28', change: '₹14.2L total value', icon: FileCheck, color: 'text-teal-600 bg-teal-50', href: '/purchase-orders' },
-    { name: 'Overdue Invoices', value: '3', change: 'Escalated to admin', icon: AlertCircle, color: 'text-danger bg-rose-50', href: '/invoices' },
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  let firstName = 'Aishwarya';
+
+  if (user) {
+    try {
+      const [dbUser] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, user.userId))
+        .limit(1);
+      if (dbUser?.name) {
+        firstName = dbUser.name.split(' ')[0];
+      }
+    } catch (e) {
+      console.error('Error fetching user name for dashboard:', e);
+    }
+  }
+
+  const statsResponse = await getDashboardStats();
+  const statsData = statsResponse?.stats || [
+    { name: 'Active RFQs', value: '0', change: 'Loading...', icon: FileText, color: 'text-blue-600 bg-blue-50', href: '/rfqs' },
+    { name: 'Pending Approvals', value: '0', change: 'Loading...', icon: CheckSquare, color: 'text-amber-600 bg-amber-50', href: '/approvals' },
+    { name: 'Issued POs', value: '0', change: 'Loading...', icon: FileCheck, color: 'text-teal-600 bg-teal-50', href: '/purchase-orders' },
+    { name: 'Overdue Invoices', value: '0', change: 'Loading...', icon: AlertCircle, color: 'text-danger bg-rose-50', href: '/invoices' },
   ];
 
-  const recentActivities = [
-    { id: 1, action: 'RFQ-2026-000001 published', user: 'Ritu Sharma', time: '10 mins ago', type: 'rfq' },
-    { id: 2, action: 'Quotation Q-2026-0412 submitted by Supernova Logistics', user: 'Mohammed Farhan', time: '1 hour ago', type: 'quote' },
-    { id: 3, action: 'PO-2026-000104 approved by Priya Mehta', user: 'Priya Mehta', time: '4 hours ago', type: 'approval' },
-    { id: 4, action: 'Invoice INV-2026-000012 marked as PAID', user: 'Vikram Joshi', time: '1 day ago', type: 'invoice' },
-  ];
+  const recentActivities = statsResponse?.recentActivities || [];
+
+  // Map icon and color to stats from getDashboardStats response
+  const iconMap: Record<string, any> = {
+    'Active RFQs': FileText,
+    'Assigned RFQs': FileText,
+    'Pending Approvals': CheckSquare,
+    'Queue checklist items': CheckSquare,
+    'Issued POs': FileCheck,
+    'Active POs': FileCheck,
+    'Overdue Invoices': AlertCircle,
+    'Pending Invoices': AlertCircle,
+  };
+
+  const colorMap: Record<string, string> = {
+    'Active RFQs': 'text-blue-600 bg-blue-50',
+    'Assigned RFQs': 'text-blue-600 bg-blue-50',
+    'Pending Approvals': 'text-amber-600 bg-amber-50',
+    'Queue checklist items': 'text-amber-600 bg-amber-50',
+    'Issued POs': 'text-teal-600 bg-teal-50',
+    'Active POs': 'text-teal-600 bg-teal-50',
+    'Overdue Invoices': 'text-danger bg-rose-50',
+    'Pending Invoices': 'text-danger bg-rose-50',
+  };
+
+  const stats = statsData.map(stat => ({
+    ...stat,
+    icon: iconMap[stat.name] || FileText,
+    color: colorMap[stat.name] || 'text-blue-600 bg-blue-50',
+  }));
 
   const quickActions = [
     { label: 'Create New RFQ', href: '/rfqs', description: 'Publish a new request for quotation' },
@@ -29,11 +77,11 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Welcome back, Aishwarya</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Welcome back, {firstName}</h1>
         <p className="text-sm text-slate-500 mt-1">Here is a summary of your procurement dashboard today.</p>
       </div>
 
-      {/* KPI Stats Grid — each card is clickable and navigates */}
+      {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -78,34 +126,40 @@ export default function DashboardPage() {
           </div>
           
           <div className="flow-root">
-            <ul className="-mb-8">
-              {recentActivities.map((activity, activityIdx) => (
-                <li key={activity.id}>
-                  <div className="relative pb-8">
-                    {activityIdx !== recentActivities.length - 1 ? (
-                      <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true" />
-                    ) : null}
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center ring-8 ring-white text-xs font-bold text-slate-600">
-                          {activity.user[0]}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0 pt-1.5 flex justify-between space-x-4">
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm">
+                No recent activity logged in this organization.
+              </div>
+            ) : (
+              <ul className="-mb-8">
+                {recentActivities.map((activity, activityIdx) => (
+                  <li key={activity.id}>
+                    <div className="relative pb-8">
+                      {activityIdx !== recentActivities.length - 1 ? (
+                        <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true" />
+                      ) : null}
+                      <div className="relative flex space-x-3">
                         <div>
-                          <p className="text-xs text-slate-600 font-medium">
-                            {activity.action} <span className="text-[10px] text-slate-400 font-normal">by {activity.user}</span>
-                          </p>
+                          <span className="h-8 w-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center ring-8 ring-white text-xs font-bold text-slate-600">
+                            {activity.user ? activity.user[0] : 'U'}
+                          </span>
                         </div>
-                        <div className="text-right text-[10px] whitespace-nowrap text-slate-400">
-                          <time>{activity.time}</time>
+                        <div className="flex-1 min-w-0 pt-1.5 flex justify-between space-x-4">
+                          <div>
+                            <p className="text-xs text-slate-600 font-medium">
+                              {activity.action} <span className="text-[10px] text-slate-400 font-normal">by {activity.user || 'System'}</span>
+                            </p>
+                          </div>
+                          <div className="text-right text-[10px] whitespace-nowrap text-slate-400">
+                            <time>{activity.time}</time>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -136,7 +190,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-xs font-bold text-teal-800">Vendor Registrations Open</p>
               <p className="text-[10px] text-teal-700 mt-0.5 leading-normal">
-                Self-registration portal is active. You have 3 pending KYC approvals to verify.
+                Self-registration portal is active. Verify KYC approvals directly from the directory.
               </p>
               <Link
                 href="/vendors"
