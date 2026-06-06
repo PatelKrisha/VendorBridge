@@ -21,16 +21,20 @@ export default function ReportsPage() {
       ["Spend Category: Raw Materials", "INR 9,28,000", "21.7% of total"],
     ];
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + csvRows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(",")).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
+    // Use Blob + createObjectURL so special characters (INR, commas, etc.) are preserved correctly
+    const csvContent = csvRows
+      .map((row) => row.map((val) => `"${val.replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.href = url;
     link.setAttribute("download", "procurement_report_data.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Free memory
   };
 
   return (

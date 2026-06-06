@@ -105,8 +105,7 @@ export default function ApprovalsPage() {
                 </button>
                 <button
                   onClick={() => handleAction(app.id, 'APPROVED')}
-                  disabled={app.conflict}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/10 transition-all cursor-pointer flex items-center gap-1"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/10 transition-all cursor-pointer flex items-center gap-1"
                 >
                   <Check className="w-4 h-4 text-white" />
                   Approve

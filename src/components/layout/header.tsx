@@ -277,7 +277,7 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
               {/* Panel Footer */}
               <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50 text-center">
                 <Link
-                  href="/activity-logs"
+                  href={role === 'VENDOR' ? '/vendor-portal' : '/activity-logs'}
                   onClick={() => setShowNotifications(false)}
                   className="text-[11px] font-semibold text-accent hover:underline"
                 >
@@ -321,7 +321,7 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
               </div>
               <div className="p-1.5 space-y-0.5">
                 <Link
-                  href="/settings"
+                  href={role === 'VENDOR' ? '/vendor-portal' : '/settings'}
                   onClick={() => setShowProfileMenu(false)}
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
                 >
