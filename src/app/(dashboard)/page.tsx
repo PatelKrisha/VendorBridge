@@ -56,7 +56,10 @@ export default function DashboardPage() {
         <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-sm shadow-slate-100/50 lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-800">Recent Activity Log</h2>
-            <button className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline cursor-pointer">
+            <button 
+              onClick={() => window.location.href = '/activity-logs'}
+              className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline cursor-pointer"
+            >
               View Audit Trail
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
@@ -100,15 +103,24 @@ export default function DashboardPage() {
             <h2 className="text-base font-bold text-slate-800">Quick Actions</h2>
             <p className="text-xs text-slate-400 mt-1">Accelerate your procurement workflow in single clicks.</p>
             <div className="mt-6 space-y-3">
-              <button className="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-between">
+              <button 
+                onClick={() => window.location.href = '/rfqs'}
+                className="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-between"
+              >
                 <span>Create New RFQ</span>
                 <ArrowUpRight className="w-4 h-4 text-slate-400" />
               </button>
-              <button className="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-between">
+              <button 
+                onClick={() => window.location.href = '/vendors'}
+                className="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-between"
+              >
                 <span>Onboard New Vendor</span>
                 <ArrowUpRight className="w-4 h-4 text-slate-400" />
               </button>
-              <button className="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-between">
+              <button 
+                onClick={() => window.location.href = '/approvals'}
+                className="w-full text-left px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex items-center justify-between"
+              >
                 <span>View Approvals Queue</span>
                 <ArrowUpRight className="w-4 h-4 text-slate-400" />
               </button>

@@ -1,22 +1,48 @@
 'use client';
 
 import { useState } from 'react';
-import { ShieldCheck, ToggleLeft, ToggleRight, Building, HelpCircle, Save } from 'lucide-react';
+import { ShieldCheck, ToggleLeft, ToggleRight, Building, Save, CheckCircle } from 'lucide-react';
 
 export default function SettingsPage() {
   const [minVendors, setMinVendors] = useState(3);
   const [selfReg, setSelfReg] = useState(true);
   const [mfaAdmin, setMfaAdmin] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleSave = () => {
+    setIsSaving(true);
+    setShowSuccess(false);
+
+    // Simulate saving delay
+    setTimeout(() => {
+      setIsSaving(false);
+      setShowSuccess(true);
+
+      // Hide success notification after 3 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    }, 1000);
+  };
 
   return (
     <div className="max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">System Configurations</h1>
-        <p className="text-sm text-slate-500 mt-1">Configure global ERP settings, compliance constraints, and policies.</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">System Configurations</h1>
+          <p className="text-sm text-slate-500 mt-1">Configure global ERP settings, compliance constraints, and policies.</p>
+        </div>
       </div>
 
+      {showSuccess && (
+        <div className="p-4 bg-emerald-50 border border-emerald-250 rounded-xl flex items-center gap-3 text-emerald-800 text-xs font-semibold animate-in fade-in duration-300">
+          <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <span>System configurations have been saved successfully and applied globally.</span>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm shadow-slate-100/50 divide-y divide-slate-100">
-        
         {/* RFQ settings */}
         <div className="p-6 space-y-4">
           <div className="flex items-start gap-3">
@@ -32,7 +58,7 @@ export default function SettingsPage() {
               <input
                 type="number"
                 value={minVendors}
-                onChange={(e) => setMinVendors(parseInt(e.target.value))}
+                onChange={(e) => setMinVendors(parseInt(e.target.value) || 1)}
                 className="mt-1.5 w-full max-w-xs px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700"
               />
             </div>
@@ -90,9 +116,13 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex items-center justify-end">
-        <button className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl font-semibold text-xs shadow-md shadow-teal-500/10 transition-colors cursor-pointer">
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl font-semibold text-xs shadow-md shadow-teal-500/10 transition-colors cursor-pointer disabled:opacity-50"
+        >
           <Save className="w-4 h-4" />
-          Save Configurations
+          <span>{isSaving ? 'Saving...' : 'Save Configurations'}</span>
         </button>
       </div>
     </div>

@@ -15,6 +15,10 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
   const profileRef = useRef<HTMLDivElement>(null);
   const notifyRef = useRef<HTMLDivElement>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ name: string; type: string; href: string }[] | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -24,10 +28,40 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
       if (notifyRef.current && !notifyRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchResults(null);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!searchQuery.trim()) {
+        setSearchResults(null);
+        return;
+      }
+      const q = searchQuery.toLowerCase();
+      const mockItems = [
+        { name: 'Supernova Logistics & Trading', type: 'Vendor', href: '/vendors' },
+        { name: 'Apex Industrial Supplies', type: 'Vendor', href: '/vendors' },
+        { name: 'Zenith Tech Systems', type: 'Vendor', href: '/vendors' },
+        { name: 'INV-2026-000010', type: 'Invoice', href: '/invoices' },
+        { name: 'INV-2026-000011', type: 'Invoice', href: '/invoices' },
+        { name: 'INV-2026-000012', type: 'Invoice', href: '/invoices' },
+        { name: 'PO-2026-000101', type: 'Purchase Order', href: '/purchase-orders' },
+        { name: 'PO-2026-000102', type: 'Purchase Order', href: '/purchase-orders' },
+        { name: 'PO-2026-000103', type: 'Purchase Order', href: '/purchase-orders' },
+        { name: 'RFQ-2026-000001', type: 'RFQ', href: '/rfqs' },
+      ];
+      const matches = mockItems.filter(
+        (item) => item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
+      );
+      setSearchResults(matches);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -51,15 +85,50 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-200/80 shadow-sm shadow-slate-100/50">
       {/* Search Input Bar */}
-      <div className="relative w-80 hidden md:block">
+      <div className="relative w-80 hidden md:block" ref={searchRef}>
         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
           <Search className="w-4 h-4" />
         </span>
         <input
           type="text"
           placeholder="Search ERP (RFQs, vendors, orders...)"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearchSubmit}
           className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-accent focus:bg-white transition-colors"
         />
+
+        {/* Search Results Dropdown */}
+        {searchResults && (
+          <div className="absolute left-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-30 divide-y divide-slate-50">
+            <div className="px-4 py-2 bg-slate-50 text-[10px] font-bold text-slate-450 uppercase">
+              Search Results ({searchResults.length})
+            </div>
+            <div className="max-h-60 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                searchResults.map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSearchResults(null);
+                      window.location.href = item.href;
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-center justify-between text-xs cursor-pointer"
+                  >
+                    <span className="font-semibold text-slate-700">{item.name}</span>
+                    <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded uppercase font-medium">
+                      {item.type}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-xs text-slate-400 text-center">
+                  No matching results found.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       <div className="md:hidden font-semibold text-primary">VendorBridge</div>
 
@@ -137,7 +206,10 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
               </div>
               <div className="p-1.5 space-y-0.5">
                 <button
-                  onClick={() => setShowProfileMenu(false)}
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    window.location.href = '/settings';
+                  }}
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer"
                 >
                   <Settings className="w-3.5 h-3.5" />
