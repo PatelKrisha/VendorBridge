@@ -9,6 +9,30 @@ export default function ReportsPage() {
     { title: 'Avg Approval Speed', value: '18.4 hours', change: 'SLA threshold is 48h', icon: Clock, color: 'text-amber-600 bg-amber-50' },
   ];
 
+  const handleExportData = () => {
+    const csvRows = [
+      ["Report Metric", "Value", "Comparison"],
+      ["Total Spend (YTD)", "INR 42,80,500", "+14% vs last year"],
+      ["Weighted Savings", "INR 5,12,000", "Avg 8.4% per RFQ"],
+      ["Avg Approval Speed", "18.4 hours", "SLA threshold is 48h"],
+      ["Spend Category: Logistics", "INR 18,50,000", "43.2% of total"],
+      ["Spend Category: IT Hardware", "INR 12,42,000", "29.0% of total"],
+      ["Spend Category: Hardware", "INR 2,60,500", "6.1% of total"],
+      ["Spend Category: Raw Materials", "INR 9,28,000", "21.7% of total"],
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + csvRows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(",")).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "procurement_report_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -16,7 +40,10 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold text-slate-800">Reports & Analytics</h1>
           <p className="text-sm text-slate-500 mt-1">Analyze procurement trends, spend insights, and vendor KPIs.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold text-xs transition-colors cursor-pointer self-start sm:self-auto">
+        <button
+          onClick={handleExportData}
+          className="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold text-xs transition-colors cursor-pointer self-start sm:self-auto"
+        >
           <Download className="w-4 h-4" />
           Export All Data
         </button>

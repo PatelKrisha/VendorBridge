@@ -76,7 +76,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       name: 'Activity Logs',
       href: '/activity-logs',
       icon: History,
-      roles: ['ADMIN'],
+      roles: ['ADMIN', 'OFFICER'],
     },
     {
       name: 'Reports & Analytics',

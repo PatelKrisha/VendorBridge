@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, Filter, ArrowUpRight, MoreVertical, X, Check, Ban, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, Filter, ArrowUpRight, MoreVertical, X, Check, Ban, Trash2, Eye } from 'lucide-react';
 
 interface Vendor {
   id: string;
@@ -95,6 +95,17 @@ export default function VendorsPage() {
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('+91 98333 44555');
   const [formAddress, setFormAddress] = useState('Industrial Estate, Mumbai, MH, 400011');
+  
+  // Close actions dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside() {
+      setActiveMenuId(null);
+    }
+    if (activeMenuId) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [activeMenuId]);
 
   // Add Vendor Onboard Submission
   const handleOnboardSubmit = (e: React.FormEvent) => {
@@ -234,10 +245,13 @@ export default function VendorsPage() {
                         className="p-1.5 text-slate-400 hover:text-accent rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
                         title="View Vendor Details"
                       >
-                        <ArrowUpRight className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setActiveMenuId(activeMenuId === vendor.id ? null : vendor.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(activeMenuId === vendor.id ? null : vendor.id);
+                        }}
                         className="p-1.5 text-slate-400 hover:text-slate-750 rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center justify-center"
                         title="Actions Menu"
                       >

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, Search, User, LogOut, Settings, CheckCheck, X } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings, CheckCheck, Check, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface HeaderProps {
@@ -57,31 +57,41 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Instant search as the user types
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    const q = searchQuery.toLowerCase();
+    const mockItems = [
+      { name: 'Supernova Logistics & Trading', type: 'Vendor', href: '/vendors' },
+      { name: 'Apex Industrial Supplies', type: 'Vendor', href: '/vendors' },
+      { name: 'Zenith Tech Systems', type: 'Vendor', href: '/vendors' },
+      { name: 'INV-2026-000010', type: 'Invoice', href: '/invoices' },
+      { name: 'INV-2026-000011', type: 'Invoice', href: '/invoices' },
+      { name: 'INV-2026-000012', type: 'Invoice', href: '/invoices' },
+      { name: 'PO-2026-000101', type: 'Purchase Order', href: '/purchase-orders' },
+      { name: 'PO-2026-000102', type: 'Purchase Order', href: '/purchase-orders' },
+      { name: 'PO-2026-000103', type: 'Purchase Order', href: '/purchase-orders' },
+      { name: 'RFQ-2026-000001', type: 'RFQ', href: '/rfqs' },
+      { name: 'RFQ-2026-000002', type: 'RFQ', href: '/rfqs' },
+    ];
+    const matches = mockItems.filter(
+      (item) => item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
+    );
+    setSearchResults(matches);
+  }, [searchQuery]);
+
   const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (!searchQuery.trim()) {
+      if (searchResults && searchResults.length > 0) {
+        const firstResult = searchResults[0];
         setSearchResults(null);
-        return;
+        setSearchQuery('');
+        router.push(firstResult.href);
       }
-      const q = searchQuery.toLowerCase();
-      const mockItems = [
-        { name: 'Supernova Logistics & Trading', type: 'Vendor', href: '/vendors' },
-        { name: 'Apex Industrial Supplies', type: 'Vendor', href: '/vendors' },
-        { name: 'Zenith Tech Systems', type: 'Vendor', href: '/vendors' },
-        { name: 'INV-2026-000010', type: 'Invoice', href: '/invoices' },
-        { name: 'INV-2026-000011', type: 'Invoice', href: '/invoices' },
-        { name: 'INV-2026-000012', type: 'Invoice', href: '/invoices' },
-        { name: 'PO-2026-000101', type: 'Purchase Order', href: '/purchase-orders' },
-        { name: 'PO-2026-000102', type: 'Purchase Order', href: '/purchase-orders' },
-        { name: 'PO-2026-000103', type: 'Purchase Order', href: '/purchase-orders' },
-        { name: 'RFQ-2026-000001', type: 'RFQ', href: '/rfqs' },
-        { name: 'RFQ-2026-000002', type: 'RFQ', href: '/rfqs' },
-      ];
-      const matches = mockItems.filter(
-        (item) => item.name.toLowerCase().includes(q) || item.type.toLowerCase().includes(q)
-      );
-      setSearchResults(matches);
     }
   };
 
@@ -236,13 +246,29 @@ export default function Header({ userName, userEmail, role }: HeaderProps) {
                         <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{n.message}</p>
                         <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
                       </div>
-                      <button
-                        onClick={(e) => dismissNotification(e, n.id)}
-                        className="p-1 text-slate-300 hover:text-slate-500 hover:bg-slate-200 rounded-md flex-shrink-0 transition-colors cursor-pointer"
-                        aria-label="Dismiss notification"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        {n.unread && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markOneRead(n.id);
+                            }}
+                            className="p-1 text-slate-300 hover:text-emerald-600 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
+                            aria-label="Mark as read"
+                            title="Mark as read"
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => dismissNotification(e, n.id)}
+                          className="p-1 text-slate-300 hover:text-slate-500 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
+                          aria-label="Dismiss notification"
+                          title="Dismiss notification"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
